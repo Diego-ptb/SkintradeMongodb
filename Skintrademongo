@@ -1,0 +1,373 @@
+/************************************************************
+ *  SKINTRADE - MODELO MONGODB + DATOS DE PRUEBA
+ *  Archivo: skindtrade_mongo.js
+ *  Uso: mongosh < skindtrade_mongo.js
+ ************************************************************/
+
+// Cambia/crea la base de datos de trabajo
+use("skindtrade");
+
+print("\n========== RESET DE COLECCIONES ==========");
+
+// Eliminamos colecciones si existen (reset seguro)
+db.usuarios.drop();
+db.categoriasArma.drop();
+db.skins.drop();
+db.publicaciones.drop();
+db.pedidos.drop();
+
+print("Colecciones eliminadas (si existían).");
+
+/************************************************************
+ *  1. COLECCIÓN: usuarios
+ *  Representa a los usuarios de SkinTrade.
+ *  Incluye algunos campos adaptados desde el modelo relacional:
+ *  - username, correo, pais, nivelKYC, saldoCLP, etc.
+ ************************************************************/
+print("\n========== CREACIÓN E INSERCIÓN: usuarios ==========");
+
+db.usuarios.insertMany([
+  {
+    _id: 1,
+    username: "vendedor01",
+    correo: "vendedor01@mail.com",
+    pais: "CL",
+    esDuoc: true,
+    nivelKYC: 1,
+    saldoCLP: 200000,
+    fechaRegistro: new Date("2024-10-01")
+  },
+  {
+    _id: 2,
+    username: "vendedor02",
+    correo: "vendedor02@mail.com",
+    pais: "CL",
+    esDuoc: false,
+    nivelKYC: 1,
+    saldoCLP: 150000,
+    fechaRegistro: new Date("2024-10-05")
+  },
+  {
+    _id: 3,
+    username: "comprador01",
+    correo: "comprador01@mail.com",
+    pais: "CL",
+    esDuoc: true,
+    nivelKYC: 2,
+    saldoCLP: 500000,
+    fechaRegistro: new Date("2024-10-10")
+  }
+]);
+
+print("usuarios creados:", db.usuarios.countDocuments(), "documentos.");
+
+
+/************************************************************
+ *  2. COLECCIÓN: categoriasArma
+ *  Similar a CATEGORIAS_PRODUCTO en Oracle.
+ ************************************************************/
+print("\n========== CREACIÓN E INSERCIÓN: categoriasArma ==========");
+
+db.categoriasArma.insertMany([
+  { _id: 1, nombreCategoria: "Rifle" },
+  { _id: 2, nombreCategoria: "Rifle de francotirador" },
+  { _id: 3, nombreCategoria: "Rifle silenciado" }
+]);
+
+print("categoriasArma creadas:", db.categoriasArma.countDocuments(), "documentos.");
+
+
+/************************************************************
+ *  3. COLECCIÓN: skins
+ *  Aquí modelamos las SKINS como los “productos” de la tienda.
+ *  - Usamos idCategoria como referencia a categoriasArma.
+ *  - stats es un subdocumento embebido (flexibilidad NoSQL).
+ ************************************************************/
+print("\n========== CREACIÓN E INSERCIÓN: skins ==========");
+
+db.skins.insertMany([
+  {
+    _id: "M4A4_REDLINE",
+    nombre: "M4A4 | Redline",
+    modelo: "M4A4",
+    idCategoria: 1,
+    rareza: "COVERT",
+    precioBaseCLP: 120000,
+    stock: 5,
+    stats: {
+      exterior: "MINIMAL WEAR",
+      float: 0.12,
+      esStatTrak: true,
+      esSouvenir: false
+    },
+    tags: ["roja", "popular", "líneas"]
+  },
+  {
+    _id: "AK47_VULCAN",
+    nombre: "AK-47 | Vulcan",
+    modelo: "AK-47",
+    idCategoria: 1,
+    rareza: "COVERT",
+    precioBaseCLP: 250000,
+    stock: 3,
+    stats: {
+      exterior: "FIELD-TESTED",
+      float: 0.22,
+      esStatTrak: false,
+      esSouvenir: false
+    },
+    tags: ["azul", "blanca"]
+  },
+  {
+    _id: "AWP_ASIIMOV",
+    nombre: "AWP | Asiimov",
+    modelo: "AWP",
+    idCategoria: 2,
+    rareza: "COVERT",
+    precioBaseCLP: 400000,
+    stock: 2,
+    stats: {
+      exterior: "MINIMAL WEAR",
+      float: 0.08,
+      esStatTrak: true,
+      esSouvenir: false
+    },
+    tags: ["naranja", "blanca"]
+  },
+  {
+    _id: "M4A1S_COIL",
+    nombre: "M4A1-S | Golden Coil",
+    modelo: "M4A1-S",
+    idCategoria: 3,
+    rareza: "COVERT",
+    precioBaseCLP: 180000,
+    stock: 4,
+    stats: {
+      exterior: "MINIMAL WEAR",
+      float: 0.10,
+      esStatTrak: false,
+      esSouvenir: false
+    },
+    tags: ["dorado", "serpiente"]
+  }
+]);
+
+print("skins creadas:", db.skins.countDocuments(), "documentos.");
+
+
+/************************************************************
+ *  4. COLECCIÓN: publicaciones
+ *  Representa un ítem listado en el “mercado”.
+ *  - idVendedor referencia a usuarios.
+ *  - skin embebido para evitar joins (NoSQL friendly).
+ ************************************************************/
+print("\n========== CREACIÓN E INSERCIÓN: publicaciones ==========");
+
+db.publicaciones.insertMany([
+  {
+    _id: 1,
+    idVendedor: 1,
+    vendedor: "vendedor01",
+    fechaPublicacion: new Date("2025-11-20"),
+    skin: {
+      idSkin: "M4A4_REDLINE",
+      nombreSkin: "M4A4 | Redline",
+      exterior: "MINIMAL WEAR",
+      esStatTrak: true,
+      float: 0.12
+    },
+    precioListadoCLP: 120000,
+    estado: "ACTIVA" // ACTIVA / VENDIDA / CANCELADA
+  },
+  {
+    _id: 2,
+    idVendedor: 2,
+    vendedor: "vendedor02",
+    fechaPublicacion: new Date("2025-11-20"),
+    skin: {
+      idSkin: "AK47_VULCAN",
+      nombreSkin: "AK-47 | Vulcan",
+      exterior: "FIELD-TESTED",
+      esStatTrak: false,
+      float: 0.22
+    },
+    precioListadoCLP: 250000,
+    estado: "ACTIVA"
+  },
+  {
+    _id: 3,
+    idVendedor: 3, // el comprador también puede vender
+    vendedor: "comprador01",
+    fechaPublicacion: new Date("2025-11-20"),
+    skin: {
+      idSkin: "AWP_ASIIMOV",
+      nombreSkin: "AWP | Asiimov",
+      exterior: "MINIMAL WEAR",
+      esStatTrak: true,
+      float: 0.08
+    },
+    precioListadoCLP: 400000,
+    estado: "ACTIVA"
+  }
+]);
+
+print("publicaciones creadas:", db.publicaciones.countDocuments(), "documentos.");
+
+
+/************************************************************
+ *  5. COLECCIÓN: pedidos
+ *  Pedido = compra de uno o varios ítems.
+ *  - items es un arreglo embebido.
+ *  - Guardamos subtotal, comisión y total en CLP.
+ ************************************************************/
+print("\n========== CREACIÓN E INSERCIÓN: pedidos ==========");
+
+db.pedidos.insertMany([
+  {
+    _id: 1,
+    idComprador: 3,
+    comprador: {
+      idUsuario: 3,
+      username: "comprador01"
+    },
+    fechaPedido: new Date("2025-11-21"),
+    items: [
+      {
+        idPublicacion: 1,
+        idSkin: "M4A4_REDLINE",
+        skin: "M4A4 | Redline",
+        cantidad: 1,
+        precioUnitarioCLP: 120000,
+        subtotalCLP: 120000
+      }
+    ],
+    subtotalCLP: 120000,
+    comisionCLP: 6000,
+    totalCLP: 126000,
+    estado: "PAGADO"
+  }
+]);
+
+print("pedidos creados:", db.pedidos.countDocuments(), "documentos.");
+
+print("\n========== MODELO SKINTRADE CREADO Y POBLADO ==========\n");
+
+
+/************************************************************
+ *  PARTE 2: EJEMPLOS CRUD (para la presentación)
+ *  --------------------------------------------------------
+ *  Estos ejemplos NO se ejecutan automáticamente al correr
+ *  el archivo, pero puedes copiarlos y pegarlos en mongosh
+ *  o Compass durante la demo.
+ ************************************************************/
+
+/*
+======================== READ (LECTURA) ========================
+
+// 1) Todas las publicaciones activas
+db.publicaciones.find({ estado: "ACTIVA" }).pretty();
+
+// 2) Publicaciones con precio > 200.000
+db.publicaciones.find({
+  estado: "ACTIVA",
+  precioListadoCLP: { $gt: 200000 }
+}).pretty();
+
+// 3) Skins del modelo AWP
+db.skins.find({ modelo: "AWP" }).pretty();
+
+// 4) Usuarios que son de Duoc
+db.usuarios.find({ esDuoc: true }).pretty();
+
+
+======================== UPDATE (ACTUALIZACIÓN) ========================
+
+// Ver stock antes
+db.skins.findOne({ _id: "M4A4_REDLINE" });
+
+// Bajar el stock en 1 usando $inc
+db.skins.updateOne(
+  { _id: "M4A4_REDLINE" },
+  { $inc: { stock: -1 } }
+);
+
+// Ver stock después
+db.skins.findOne({ _id: "M4A4_REDLINE" });
+
+// Cambiar estado de una publicación a VENDIDA
+db.publicaciones.updateOne(
+  { _id: 1 },
+  { $set: { estado: "VENDIDA" } }
+);
+
+// Verificar
+db.publicaciones.findOne({ _id: 1 });
+
+
+======================== DELETE (ELIMINACIÓN) ========================
+
+// Crear publicación temporal
+db.publicaciones.insertOne({
+  _id: 99,
+  idVendedor: 1,
+  vendedor: "vendedor01",
+  fechaPublicacion: new Date(),
+  skin: {
+    idSkin: "M4A1S_COIL",
+    nombreSkin: "M4A1-S | Golden Coil",
+    exterior: "MINIMAL WEAR",
+    esStatTrak: false,
+    float: 0.10
+  },
+  precioListadoCLP: 1000,
+  estado: "CANCELADA"
+});
+
+// Ver que existe
+db.publicaciones.findOne({ _id: 99 });
+
+// Eliminar publicación cancelada
+db.publicaciones.deleteOne({ _id: 99, estado: "CANCELADA" });
+
+// Verificar que ya no existe (debería devolver null)
+db.publicaciones.findOne({ _id: 99 });
+
+
+======================== CREATE (CREAR NUEVO PEDIDO) ========================
+
+db.pedidos.insertOne({
+  fechaPedido: new Date(),
+  idComprador: 3,
+  comprador: {
+    idUsuario: 3,
+    username: "comprador01"
+  },
+  items: [
+    {
+      idPublicacion: 2,
+      idSkin: "AK47_VULCAN",
+      skin: "AK-47 | Vulcan",
+      cantidad: 1,
+      precioUnitarioCLP: 250000,
+      subtotalCLP: 250000
+    },
+    {
+      idPublicacion: 3,
+      idSkin: "AWP_ASIIMOV",
+      skin: "AWP | Asiimov",
+      cantidad: 1,
+      precioUnitarioCLP: 400000,
+      subtotalCLP: 400000
+    }
+  ],
+  subtotalCLP: 650000,
+  comisionCLP: 32500,
+  totalCLP: 682500,
+  estado: "PROCESANDO"
+});
+
+// Ver todos los pedidos del comprador01
+db.pedidos.find({ "comprador.idUsuario": 3 }).pretty();
+
+*/
+
